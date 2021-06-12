@@ -1,0 +1,23 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Service bdj",
+        "title": "SERVICE BDJ",
+        "contact": {
+            "name": "Muhammadnurbasari",
+            "email": "m.nurbasari@gmail.com"
+        },
+        "version": "0.1.5"
+    },
+    "paths": {},
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        }
+    }
+}
