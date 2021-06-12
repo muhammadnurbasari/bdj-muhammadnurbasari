@@ -7,6 +7,7 @@ type (
 		DbUser     string
 		DbPass     string
 		DbName     string
+		DbDriver   string
 		DbSSL      string
 		DbTimezone string
 		MaxIdle    int

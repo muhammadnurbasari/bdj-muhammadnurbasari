@@ -21,7 +21,7 @@ func main() {
 		},
 	)
 
-	err := godotenv.Load("config/.env")
+	err := godotenv.Load("config/sample.env")
 	if err != nil {
 		log.Error().Msg("Failed read configuration database")
 		return
@@ -67,11 +67,11 @@ func main() {
 	}
 
 	//setting db config
-	dbHost := os.Getenv("DB_HOST_DASHBOARD")
+	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER_DASHBOARD")
-	dbPass := os.Getenv("DB_PASS_DASHBOARD")
-	dbName := os.Getenv("DB_NAME_DASHBOARD")
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbName := os.Getenv("DB_NAME")
 	dbDriver := os.Getenv("DB_DRIVER")
 	migrationConf, errMigrationConf := migrates.NewMigrationConfig(*migrationDir, dbHost, dbPort, dbUser, dbPass, dbName, dbDriver)
 	if errMigrationConf != nil {

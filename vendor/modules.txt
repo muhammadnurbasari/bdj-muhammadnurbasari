@@ -106,6 +106,9 @@ github.com/swaggo/swag
 # github.com/ugorji/go/codec v1.1.13
 github.com/ugorji/go/codec
 # golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+## explicit
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.0.0-20210610132358-84b48f89b13b
 ## explicit
