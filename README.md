@@ -15,7 +15,7 @@
 
 API untuk get list Combine Data Rs & Data kelurahan
 
-**URL** : `/bdj/data/combine/{group_id}`
+**URL** : `/bdj/data/combine`
 
 **Method** : `GET`
 
