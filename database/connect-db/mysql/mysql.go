@@ -1,40 +1,43 @@
 package mysql
 
 import (
+	"database/sql"
 	"fmt"
 	"net/url"
 
-	"github.com/jinzhu/gorm"
+	//driver mysql database
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var ConnORM *gorm.DB
+var Conn *sql.DB
 
-//getConnectionStringORM - preparation connection database mysql ORM
-func getConnectionStringORM(dbHost, dbPort, dbUser, dbPass, dbName string) string {
+//getConnectionString - preparation connection database mysql
+func getConnectionString(dbHost, dbPort, dbUser, dbPass, dbName string) string {
 	desc := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&multiStatements=true", dbUser, dbPass, dbHost, dbPort, dbName)
 
 	return desc
 }
 
-//ConnMySQLORM - create connection ORM database mysql
-func ConnMySQLORM(dbHost, dbPort, dbUser, dbPass, dbName string, maxIdle, maxConn int) (*gorm.DB, error) {
+//ConnMySQL - create connection database mysql
+func ConnMySQL(dbHost, dbPort, dbUser, dbPass, dbName string, maxIdle, maxConn int) (*sql.DB, error) {
 	val := url.Values{}
 	val.Add("loc", "Asia/Jakarta")
 
-	desc := getConnectionStringORM(dbHost, dbPort, dbUser, dbPass, dbName)
+	desc := getConnectionString(dbHost, dbPort, dbUser, dbPass, dbName)
 	dsn := fmt.Sprintf("%s&%s", desc, val.Encode())
-	mySqlOrm, ormErr := gorm.Open(`mysql`, dsn)
-	if ormErr != nil {
-		return nil, ormErr
+	mysqldb, err := sql.Open(`mysql`, dsn)
+	if err != nil {
+		return nil, err
 	}
-	ConnORM = mySqlOrm
+	Conn = mysqldb
 
-	errPing := mySqlOrm.DB().Ping()
+	errPing := mysqldb.Ping()
 	if errPing != nil {
 		return nil, errPing
 	}
 
-	mySqlOrm.DB().SetMaxIdleConns(maxIdle)
-	mySqlOrm.DB().SetMaxOpenConns(maxConn)
-	return mySqlOrm, nil
+	mysqldb.SetMaxIdleConns(maxIdle)
+	mysqldb.SetMaxOpenConns(maxConn)
+
+	return mysqldb, nil
 }

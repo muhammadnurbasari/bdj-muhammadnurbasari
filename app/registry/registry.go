@@ -28,7 +28,7 @@ func NewAppRegistry() *AppRegistry {
 func initializeEnvPublic() (*appServerModel.SetConnDb, error) {
 	moduleName := "registry.initializeEnvPublic"
 	log.Debug().Msg("Read file env for DB PUBLIC. . .")
-	err := godotenv.Load("config/.env")
+	err := godotenv.Load("config/sample.env")
 	if err != nil {
 		return nil, errors.New(moduleName + ".err : " + err.Error())
 	}
@@ -125,10 +125,6 @@ func (reg *AppRegistry) StartServer() {
 	log.Info().Msg("Last Update : " + time.Now().Format("2006-01-02 15:04:05"))
 	log.Info().Msg("REST API BDJ Running version 0.1.5 at port : " + appPort)
 
-	//Run Swagger
-	log.Info().Msg("Swagger run on /docs/swagger/index.html")
-	reg.serverHttp.RunSwaggerMiddleware()
-
 	if errHTTP := reg.serverHttp.RunHttpServer(); errHTTP != nil {
 		log.Error().Msg(errHTTP.Error())
 	}
@@ -164,9 +160,9 @@ func getDBConnection(data *appServerModel.SetConnDb) (*gorm.DB, error) {
 	log.Debug().Msg("data.DbUser : " + data.DbUser)
 	log.Debug().Msg("data.DbPass : " + data.DbPass)
 	log.Debug().Msg("data.DbName : " + data.DbName)
-	// log.Debug().Msg("data.DbPort : " + data.DbPort)
+	log.Debug().Msg("data.DbPort : " + data.DbPort)
 	// log.Debug().Msg("data.DbSSL : " + data.DbSSL)
-	log.Debug().Msg("data.DbTimezone : " + data.DbTimezone)
+	// log.Debug().Msg("data.DbTimezone : " + data.DbTimezone)
 	conn, err := mysql.ConnMySQLORM(data.DbHost, data.DbPort, data.DbUser, data.DbPass,
 		data.DbName, data.MaxIdle, data.MaxConn)
 	if err != nil {

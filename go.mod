@@ -21,6 +21,7 @@ require (
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.3.0
 	github.com/swaggo/swag v1.7.0
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 	golang.org/x/net v0.0.0-20210610132358-84b48f89b13b // indirect
 	golang.org/x/sys v0.0.0-20210611083646-a4fc73990273 // indirect
 	golang.org/x/tools v0.1.3 // indirect

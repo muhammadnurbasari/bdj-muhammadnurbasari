@@ -1,3 +1,78 @@
+definitions:
+  combineModel.Kecamatan:
+    properties:
+      kode:
+        type: string
+      nama:
+        type: string
+    type: object
+  combineModel.Kelurahan:
+    properties:
+      kode:
+        type: string
+      nama:
+        type: string
+    type: object
+  combineModel.Kota:
+    properties:
+      kode:
+        type: string
+      nama:
+        type: string
+    type: object
+  combineModel.Location:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  combineModel.Response:
+    properties:
+      count:
+        example: 5
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/combineModel.ResultData'
+        type: array
+      status:
+        example: success
+        type: string
+    type: object
+  combineModel.ResultData:
+    properties:
+      alamat:
+        type: string
+      email:
+        type: string
+      faximile:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      jenis_rsu:
+        type: string
+      kecamatan:
+        $ref: '#/definitions/combineModel.Kecamatan'
+      kelurahan:
+        $ref: '#/definitions/combineModel.Kelurahan'
+      kode_pos:
+        type: integer
+      kota:
+        $ref: '#/definitions/combineModel.Kota'
+      location:
+        $ref: '#/definitions/combineModel.Location'
+      nama_rsu:
+        type: string
+      telepon:
+        items:
+          type: string
+        type: array
+      website:
+        type: string
+    type: object
 info:
   contact:
     email: m.nurbasari@gmail.com
@@ -5,7 +80,30 @@ info:
   description: Service bdj
   title: SERVICE BDJ
   version: 0.1.5
-paths: {}
+paths:
+  /bdj/data/combine:
+    get:
+      consumes:
+      - application/json
+      description: get all data Combine RS DATA & Kelurahan DATA
+      parameters:
+      - description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/combineModel.Response'
+      security:
+      - JWTToken: []
+      summary: get data Combine RS DATA & Kelurahan DATA
+      tags:
+      - Combine RS DATA & Kelurahan DATA
 securityDefinitions:
   ApiKeyAuth:
     in: header
