@@ -1,25 +1,30 @@
 package combineResponseRepository
 
 import (
+	"bdj-muhammadnurbasari/models/apiKelurahanModel"
 	"bdj-muhammadnurbasari/models/combineModel"
 	"bdj-muhammadnurbasari/modules/combineResponse"
 	"bdj-muhammadnurbasari/modules/hitApiKelurahan"
 	"bdj-muhammadnurbasari/modules/hitApiRS"
 	"errors"
 	"strconv"
+
+	"github.com/jinzhu/gorm"
 )
 
 type combineRepository struct {
 	hitApiKelurahanRepo hitApiKelurahan.HitApiKelurahanRepository
 	hitApiRSRepo        hitApiRS.HitApiRSRepository
+	Conn                *gorm.DB
 }
 
 //NewCombineRepository - will create an object that represent that combineResponse.CombineResponseRepository interface
 func NewCombineRepository(hitApiKelurahanRepo hitApiKelurahan.HitApiKelurahanRepository,
-	hitApiRSRepo hitApiRS.HitApiRSRepository) combineResponse.CombineResponseRepository {
+	hitApiRSRepo hitApiRS.HitApiRSRepository, Conn *gorm.DB) combineResponse.CombineResponseRepository {
 	return &combineRepository{
 		hitApiKelurahanRepo: hitApiKelurahanRepo,
 		hitApiRSRepo:        hitApiRSRepo,
+		Conn:                Conn,
 	}
 }
 
@@ -50,9 +55,9 @@ func (combineRepo *combineRepository) GetResponseCombine() (*[]combineModel.Resu
 
 		// kelurahan
 		kodeKelurahanString := strconv.Itoa(v.KodeKelurahan)
-		namaKelurahan, errNamaKelurahan := combineRepo.GetNamaKelurahanByKode(v.KodeKelurahan)
+		namaKelurahan, namaKec, namaKota, errNamaKelurahan := combineRepo.GetNamaByKode(v.KodeKelurahan, v.KodeKecamatan, v.KodeKota)
 		if errNamaKelurahan != nil {
-			return nil, countData, errors.New("GetResponseCombine() err nama kelurahan = " + errNamaKelurahan.Error())
+			return nil, countData, errors.New(errNamaKelurahan.Error())
 		}
 		resKelurahan := combineModel.Kelurahan{
 			Kode: kodeKelurahanString,
@@ -61,21 +66,13 @@ func (combineRepo *combineRepository) GetResponseCombine() (*[]combineModel.Resu
 
 		// kecamatan
 		kodeKecamatanString := strconv.Itoa(v.KodeKecamatan)
-		namaKecamatan, errNamaKecamatan := combineRepo.GetNamaKecamatanByKode(v.KodeKecamatan)
-		if errNamaKecamatan != nil {
-			return nil, countData, errors.New("GetResponseCombine() err nama kelurahan = " + errNamaKecamatan.Error())
-		}
 		resKec := combineModel.Kecamatan{
 			Kode: kodeKecamatanString,
-			Nama: namaKecamatan,
+			Nama: namaKec,
 		}
 
 		// kota
 		kodeKotaString := strconv.Itoa(v.KodeKota)
-		namaKota, errNamaKota := combineRepo.GetNamaKotaByKode(v.KodeKota)
-		if errNamaKota != nil {
-			return nil, countData, errors.New("GetResponseCombine() err nama kelurahan = " + errNamaKota.Error())
-		}
 		resKota := combineModel.Kota{
 			Kode: kodeKotaString,
 			Nama: namaKota,
@@ -104,56 +101,20 @@ func (combineRepo *combineRepository) GetResponseCombine() (*[]combineModel.Resu
 
 }
 
-// GetNamaKelurahanByKode
-func (combineRepo *combineRepository) GetNamaKelurahanByKode(kode int) (string, error) {
-	// get resp api Kelurahan
-	dataKelurahan, errDataKelurahan := combineRepo.hitApiKelurahanRepo.GetDataKelurahanFromAPI()
-	if errDataKelurahan != nil {
-		return "", errDataKelurahan
-	}
-	var resp string
-	for _, v := range dataKelurahan.Data {
-		if kode == v.KodeKelurahan {
-			resp = v.NamaKelurahan
-			break
+// GetNamaByKode
+func (combineRepo *combineRepository) GetNamaByKode(kodeKel, kodeKec, kodeKota int) (string, string, string, error) {
+	var data apiKelurahanModel.InfoLocations
+	errKelurahan := combineRepo.Conn.Select("*").Where("kode_kelurahan = ? AND kode_kecamatan = ? AND kode_kota = ?", kodeKel, kodeKec, kodeKota).First(&data).Error
+	if errKelurahan != nil {
+		if errKelurahan.Error() == "record not found" {
+			return "", "", "", errKelurahan
 		}
+		return "", "", "", errors.New("FindByID err = " + errKelurahan.Error())
 	}
+	var namaKel, namaKec, namaKota string
+	namaKel = data.NamaKelurahan
+	namaKec = data.NamaKecamatan
+	namaKota = data.NamaKota
 
-	return resp, nil
-}
-
-// GetNamaKecamatanByKode
-func (combineRepo *combineRepository) GetNamaKecamatanByKode(kode int) (string, error) {
-	// get resp api Kelurahan
-	dataKec, errDataKec := combineRepo.hitApiKelurahanRepo.GetDataKelurahanFromAPI()
-	if errDataKec != nil {
-		return "", errDataKec
-	}
-	var resp string
-	for _, v := range dataKec.Data {
-		if kode == v.KodeKecamatan {
-			resp = v.NamaKecamatan
-			break
-		}
-	}
-
-	return resp, nil
-}
-
-// GetNamaKotaByKode
-func (combineRepo *combineRepository) GetNamaKotaByKode(kode int) (string, error) {
-	// get resp api Kelurahan
-	dataKota, errDataKota := combineRepo.hitApiKelurahanRepo.GetDataKelurahanFromAPI()
-	if errDataKota != nil {
-		return "", errDataKota
-	}
-	var resp string
-	for _, v := range dataKota.Data {
-		if kode == v.KodeKota {
-			resp = v.NamaKota
-			break
-		}
-	}
-
-	return resp, nil
+	return namaKel, namaKec, namaKota, nil
 }

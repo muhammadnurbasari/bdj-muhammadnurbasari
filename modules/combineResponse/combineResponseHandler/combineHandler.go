@@ -83,9 +83,9 @@ func (handler *combineHandler) GetDataCombine(c *gin.Context) {
 		c.JSON(
 			http.StatusOK,
 			gin.H{
-				"status":   http.StatusOK,
-				"messages": "success",
-				"result":   &[]string{},
+				"status": "success",
+				"count":  count,
+				"data":   &[]string{},
 			},
 		)
 		return
@@ -94,9 +94,9 @@ func (handler *combineHandler) GetDataCombine(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
 		gin.H{
-			"status":   http.StatusOK,
-			"messages": "success",
-			"result":   &res,
+			"status": "success",
+			"count":  count,
+			"data":   &res,
 		},
 	)
 }
