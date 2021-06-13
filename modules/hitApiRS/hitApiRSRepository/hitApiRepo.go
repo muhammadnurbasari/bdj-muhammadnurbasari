@@ -7,15 +7,18 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/jinzhu/gorm"
 )
 
 type apiRSRepo struct {
-	Url string
+	Url  string
+	Conn *gorm.DB
 }
 
 //NewApiRSRepository - will create an object that represent that hitApiRS.HitApiRSRepository interface
-func NewApiRSRepository(Url string) hitApiRS.HitApiRSRepository {
-	return &apiRSRepo{Url}
+func NewApiRSRepository(Url string, Conn *gorm.DB) hitApiRS.HitApiRSRepository {
+	return &apiRSRepo{Url: Url, Conn: Conn}
 }
 
 // GetDataRSFromAPI - hit api from http://api.jakarta.go.id/v1/rumahsakitumum
@@ -50,4 +53,89 @@ func (data *apiRSRepo) GetDataRSFromAPI() (*apiRSModel.ResponseGetRS, error) {
 	}
 
 	return &resData, nil
+}
+
+func (data *apiRSRepo) InsertDataRS() error {
+	var rs []apiRSModel.RumahSakits
+
+	errGet := data.Conn.Find(&rs).Error
+	if errGet != nil {
+		return errGet
+	}
+
+	if len(rs) == 0 {
+		// get data rs
+		dataRS, err := data.GetDataRSFromAPI()
+		if err != nil {
+			return err
+		}
+		// var rsData apiRSModel.DataRumahSakits
+		// var locationData apiRSModel.DataLocations
+		// var faximileData apiRSModel.DataFaximiles
+		// var teleponData apiRSModel.DataTelepons
+		for _, v := range dataRS.Data {
+			// insert rumah_sakits
+			rsData := apiRSModel.RumahSakits{
+				RsId:          v.ID,
+				NamaRsu:       v.NamaRsu,
+				JenisRsu:      v.JenisRsu,
+				KodePos:       v.KodePos,
+				Website:       v.Website,
+				Email:         v.Email,
+				KodeKota:      v.KodeKota,
+				KodeKecamatan: v.KodeKecamatan,
+				KodeKelurahan: v.KodeKelurahan,
+				Latitude:      v.Latitude,
+				Longitude:     v.Longitude,
+			}
+
+			err := data.Conn.Create(&rsData).Error
+
+			if err != nil {
+				return err
+			}
+
+			locationData := apiRSModel.Locations{
+				Alamat:    v.Location.Alamat,
+				Latitude:  v.Latitude,
+				Longitude: v.Longitude,
+				RsId:      v.ID,
+			}
+
+			err = data.Conn.Create(&locationData).Error
+
+			if err != nil {
+				return err
+			}
+
+			for _, valueTelp := range v.Telepon {
+				telpData := apiRSModel.Telepons{
+					NoTelp: valueTelp,
+					RsId:   v.ID,
+				}
+
+				err = data.Conn.Create(&telpData).Error
+
+				if err != nil {
+					return err
+				}
+			}
+
+			for _, vFax := range v.Faximile {
+				faxData := apiRSModel.Faximiles{
+					NoFax: vFax,
+					RsId:  v.ID,
+				}
+
+				err = data.Conn.Create(&faxData).Error
+
+				if err != nil {
+					return err
+				}
+			}
+
+		}
+	}
+
+	return nil
 }

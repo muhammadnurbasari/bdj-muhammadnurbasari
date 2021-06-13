@@ -7,15 +7,18 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/jinzhu/gorm"
 )
 
 type apiKelurahanRepo struct {
-	Url string
+	Url  string
+	Conn *gorm.DB
 }
 
 //NewApiKelurahanRepository - will create an object that represent that hitApiRS.HitApiRSRepository interface
-func NewApiKelurahanRepository(Url string) hitApiKelurahan.HitApiKelurahanRepository {
-	return &apiKelurahanRepo{Url}
+func NewApiKelurahanRepository(Url string, Conn *gorm.DB) hitApiKelurahan.HitApiKelurahanRepository {
+	return &apiKelurahanRepo{Url: Url, Conn: Conn}
 }
 
 // GetDataKelurahanFromAPI - hit api from http://api.jakarta.go.id/v1/kelurahan
@@ -30,7 +33,7 @@ func (data *apiKelurahanRepo) GetDataKelurahanFromAPI() (*apiKelurahanModel.Resp
 		return nil, errors.New("GetDataKelurahanFromAPI Err http.NewRequest() = " + err.Error())
 	}
 	req.Header.Add("Authorization", "LdT23Q9rv8g9bVf8v/fQYsyIcuD14svaYL6Bi8f9uGhLBVlHA3ybTFjjqe+cQO8k")
-	req.Header.Add("Cookie", "TS010f22dc=0181e0c80a296432b00ea02ef76beb8095a2dd9604309aa16328e4e2dcff6ae2c9afa403f5289d3a682e79102bb4761dbf0cebeef1; TS518ba6e9_27=086332a3cdab2000ab9bd4bc0f309096ddb3de8aecebe7fb8c18fd75e602872bedf8a253ad84767808b00b15b511200035c5b8ef97e9f023a194bb022df306e53721ccea83a38aa35217bbf3d3a96e92")
+	req.Header.Add("Cookie", "TS010f22dc=0181e0c80a3a50803a5a695aea22aa313885dba6a4fefc48e5cf46fb4685db6999ffd23feeb6fbb0b37634292b662aa9b4f5529b90; TS518ba6e9_27=086332a3cdab2000865d54c5279d81bd4c525228c021f141cf4d9d6f022925e27ea5edba665123ab083bdbd136112000689887718d1bf19de2e64654f55e977cdb941251c166641d7225367fceaa7218")
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -46,8 +49,56 @@ func (data *apiKelurahanRepo) GetDataKelurahanFromAPI() (*apiKelurahanModel.Resp
 	var resData apiKelurahanModel.ResponseGetKelurahan
 	err = json.Unmarshal(body, &resData)
 	if err != nil {
-		return nil, errors.New("GetDataKelurahanFromAPI Err json.Unmarshal() = " + err.Error())
+		var ErrorData apiKelurahanModel.ErrorResponseGetApi
+		err = json.Unmarshal(body, &ErrorData)
+		if err != nil {
+			return nil, errors.New("GetDataKelurahanFromAPI Err json.Unmarshal() ErrorData = " + err.Error())
+		}
+		return nil, errors.New(ErrorData.Data)
 	}
 
 	return &resData, nil
+}
+
+func (data *apiKelurahanRepo) InsertDataLocationInfo() error {
+	var kelurahan []apiKelurahanModel.InfoLocations
+
+	errGet := data.Conn.Find(&kelurahan).Error
+	if errGet != nil {
+		return errGet
+	}
+
+	if len(kelurahan) == 0 {
+		// get data rs
+		dataKel, err := data.GetDataKelurahanFromAPI()
+		if err != nil {
+			return err
+		}
+		// var rsData apiRSModel.DataRumahSakits
+		// var locationData apiRSModel.DataLocations
+		// var faximileData apiRSModel.DataFaximiles
+		// var teleponData apiRSModel.DataTelepons
+		for _, v := range dataKel.Data {
+			// insert rumah_sakits
+			kelData := apiKelurahanModel.InfoLocations{
+				KodeProvinsi:  v.KodeProvinsi,
+				NamaProvinsi:  v.NamaProvinsi,
+				KodeKota:      v.KodeKota,
+				NamaKota:      v.NamaKota,
+				KodeKecamatan: v.KodeKecamatan,
+				NamaKecamatan: v.NamaKecamatan,
+				KodeKelurahan: v.KodeKelurahan,
+				NamaKelurahan: v.NamaKelurahan,
+			}
+
+			err := data.Conn.Create(&kelData).Error
+
+			if err != nil {
+				return err
+			}
+
+		}
+	}
+
+	return nil
 }

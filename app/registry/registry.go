@@ -142,6 +142,7 @@ func (reg *AppRegistry) initializeAppRegistry() error {
 
 	//initial modules
 	reg.initializeDomainModules()
+	reg.insertData()
 
 	return nil
 }

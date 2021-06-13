@@ -18,10 +18,10 @@ func BdjRoutes(r *gin.Engine, db *gorm.DB) {
 	auditTrailRepo := auditTrailsRepository.NewAuditTrailsRepository(db)
 	auditTrailUC := auditTrailsUsecase.NewAuditTrailsUsecase(auditTrailRepo)
 
-	apiKelurahanRepo := hitApiKelurahanRepository.NewApiKelurahanRepository("http://api.jakarta.go.id/v1/kelurahan")
-	apiRSRepo := hitApiRSRepository.NewApiRSRepository("http://api.jakarta.go.id/v1/rumahsakitumum")
+	apiKelurahanRepo := hitApiKelurahanRepository.NewApiKelurahanRepository("http://api.jakarta.go.id/v1/kelurahan", db)
+	apiRSRepo := hitApiRSRepository.NewApiRSRepository("http://api.jakarta.go.id/v1/rumahsakitumum", db)
 
-	combineRepo := combineResponseRepository.NewCombineRepository(apiKelurahanRepo, apiRSRepo)
+	combineRepo := combineResponseRepository.NewCombineRepository(apiKelurahanRepo, apiRSRepo, db)
 	combineUC := combineResponseUsecase.NewCombineUsecase(combineRepo)
 	combineResponseHandler.NewCombineHTTPHandler(r, auditTrailUC, combineUC)
 }
