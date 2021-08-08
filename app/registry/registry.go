@@ -4,7 +4,9 @@ import (
 	"bdj-muhammadnurbasari/app/appServer"
 	"bdj-muhammadnurbasari/database/connect-db/mysql"
 	"bdj-muhammadnurbasari/models/appServerModel"
+	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -17,6 +19,7 @@ import (
 
 type AppRegistry struct {
 	ConnPublic *gorm.DB
+	ConnSql    *sql.DB
 	serverHttp *appServer.HttpHandler
 }
 
@@ -44,7 +47,7 @@ func initializeEnvPublic() (*appServerModel.SetConnDb, error) {
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
 	dbName := os.Getenv("DB_NAME")
-	// dbTimezone := os.Getenv("DB_TIME_ZONE")
+	dbTimezone := os.Getenv("DB_TIME_ZONE")
 	// dbSSL := os.Getenv("DB_SSL")
 	maxIdle := os.Getenv("MAX_IDLE")
 	maxConn := os.Getenv("MAX_CONN")
@@ -61,15 +64,15 @@ func initializeEnvPublic() (*appServerModel.SetConnDb, error) {
 
 	log.Debug().Msg("set config database . . .")
 	setConnDb := appServerModel.SetConnDb{
-		DbHost: dbHost,
-		DbPort: dbPort,
-		DbUser: dbUser,
-		DbPass: dbPass,
-		DbName: dbName,
-		// DbSSL:      dbSSL,
-		// DbTimezone: dbTimezone,
-		MaxIdle: myMaxIdle,
-		MaxConn: myMaxConn,
+		DbHost:     dbHost,
+		DbPort:     dbPort,
+		DbUser:     dbUser,
+		DbPass:     dbPass,
+		DbName:     dbName,
+		DbSSL:      "disable",
+		DbTimezone: dbTimezone,
+		MaxIdle:    myMaxIdle,
+		MaxConn:    myMaxConn,
 	}
 
 	return &setConnDb, nil
@@ -98,8 +101,14 @@ func (reg *AppRegistry) StartServer() {
 		log.Error().Msg(errConnPublic.Error())
 		return
 	}
+	connSQL, errConnSQL := getDBConnectionSQL(setConnDbPublic)
+	if errConnSQL != nil {
+		log.Error().Msg(errConnSQL.Error())
+		return
+	}
 
 	reg.ConnPublic = connPublic
+	reg.ConnSql = connSQL
 
 	//close connection
 	defer func() {
@@ -171,4 +180,23 @@ func getDBConnection(data *appServerModel.SetConnDb) (*gorm.DB, error) {
 	}
 
 	return conn, nil
+}
+
+func getDBConnectionSQL(data *appServerModel.SetConnDb) (*sql.DB, error) {
+	log.Debug().Msg("data.DbHost : " + data.DbHost)
+	log.Debug().Msg("data.DbUser : " + data.DbUser)
+	log.Debug().Msg("data.DbPass : " + data.DbPass)
+	log.Debug().Msg("data.DbName : " + data.DbName)
+	log.Debug().Msg("data.DbPort : " + data.DbPort)
+	log.Debug().Msg("data.DbSSL : " + data.DbSSL)
+	log.Debug().Msg("data.DbTimezone : " + data.DbTimezone)
+	// conn, err := mysql.ConnMySQLORM(data.DbHost, data.DbPort, data.DbUser, data.DbPass,
+	// 	data.DbName, data.MaxIdle, data.MaxConn)
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", data.DbUser, data.DbPass, data.DbHost, data.DbPort, data.DbName))
+
+	if err != nil {
+		return nil, errors.New("registry.getDBConnection.err : " + err.Error())
+	}
+
+	return db, nil
 }
